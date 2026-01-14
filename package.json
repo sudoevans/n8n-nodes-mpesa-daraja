@@ -1,0 +1,53 @@
+{
+  "name": "n8n-nodes-mpesa-daraja",
+  "version": "0.1.0",
+  "description": "n8n node for Safaricom M-Pesa Daraja 3.0 API",
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Evans",
+    "email": "evans@sudoflows.com"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier --write \"**/*.{ts,js,md}\"",
+    "lint": "eslint \"**/*.{ts,js}\" --fix",
+    "test": "jest"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "nodes": [
+      "dist/nodes/Mpesa/Mpesa.node.js",
+      "dist/nodes/MpesaTrigger/MpesaTrigger.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/MpesaApi.credentials.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^18.16.0",
+    "@types/request": "^2.48.13",
+    "@types/request-promise-native": "^1.0.17",
+    "@typescript-eslint/parser": "^5.59.0",
+    "eslint": "^8.38.0",
+    "gulp": "^4.0.2",
+    "jest": "^29.5.0",
+    "n8n-core": "*",
+    "n8n-workflow": "*",
+    "prettier": "^2.8.8",
+    "request": "^2.88.2",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
