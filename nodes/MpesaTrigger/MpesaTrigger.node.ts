@@ -26,7 +26,7 @@ export class MpesaTrigger implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'M-Pesa Trigger',
         name: 'mpesaTrigger',
-        icon: 'file:mpesa.svg',
+        icon: 'file:../../icons/mpesa.svg',
         group: ['trigger'],
         version: 1,
         subtitle: '={{$parameter["event"]}}',

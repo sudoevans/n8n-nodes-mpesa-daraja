@@ -10,7 +10,7 @@ export class Mpesa implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'M-Pesa',
         name: 'mpesa',
-        icon: 'file:mpesa.svg',
+        icon: 'file:../../icons/mpesa.svg',
         group: ['transform'],
         version: 1,
         subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
