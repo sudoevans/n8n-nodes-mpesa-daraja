@@ -1,3 +1,5 @@
 Safaricom APIs
 node_modules
 dist
+*.tgz
+
