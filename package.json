@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mpesa-daraja",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "n8n node for Safaricom M-Pesa Daraja 3.0 API",
   "keywords": [
     "n8n-community-node-package",
