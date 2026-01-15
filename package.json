@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mpesa-daraja",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "n8n node for Safaricom M-Pesa Daraja 3.0 API",
   "keywords": [
     "n8n-community-node-package"
@@ -8,7 +8,7 @@
   "license": "MIT",
   "author": {
     "name": "Evans",
-    "email": "evans@sudoflows.com"
+    "email": "snaveqiptoo@gmail.com"
   },
   "main": "index.js",
   "scripts": {

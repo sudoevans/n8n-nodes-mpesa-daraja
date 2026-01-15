@@ -35,7 +35,7 @@ Before using this integration, you need:
 
 1. Go to Settings > Community Nodes in your n8n instance
 2. Select Install
-3. Enter `n8n-nodes-mpesa`
+3. Enter `n8n-nodes-mpesa-daraja`
 4. Agree to the risks and select Install
 5. Restart n8n to load the new nodes
 
