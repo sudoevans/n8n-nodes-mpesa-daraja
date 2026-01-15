@@ -1,8 +1,8 @@
-# n8n-nodes-mpesa
+# n8n-nodes-mpesa-daraja
 
 <div align="center">
-  <img src="https://n8n.io/n8n-logo.png" alt="n8n" width="150"/>
   <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" alt="M-Pesa" width="150"/>
+  <img src="https://n8n.io/n8n-logo.png" alt="n8n" width="150"/>
 </div>
 
 This package provides n8n nodes to interact with the Safaricom M-Pesa Daraja API 3.0. Automate mobile payments, account balance checks, transaction status queries, and webhook handling for payment callbacks.
@@ -45,7 +45,7 @@ For self-hosted n8n instances:
 
 ```bash
 cd /path/to/n8n/installation
-npm install n8n-nodes-mpesa
+npm install n8n-nodes-mpesa-daraja
 # Restart n8n
 ```
 
@@ -234,8 +234,8 @@ The trigger node supports the following webhook events:
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ## Support
 
-For issues or feature requests, please visit the [GitHub repository](https://github.com/sudoevans/n8n-nodes-mpesa).
+For issues or feature requests, please visit the [GitHub repository](https://github.com/sudoevans/n8n-nodes-mpesa-daraja) and open an issue.

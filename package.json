@@ -4,13 +4,13 @@
   "description": "n8n node for Safaricom M-Pesa Daraja 3.0 API",
   "keywords": [
     "n8n-community-node-package",
-    "mpesa",
-    "safaricom",
-    "daraja",
-    "payments",
-    "mobile-money",
-    "kenya",
-    "api",
+    "mpesa-n8n",
+    "safaricom-n8n",
+    "daraja-n8n",
+    "payments-n8n",
+    "mobile-money-n8n",
+    "kenya-n8n",
+    "api-n8n",
     "workflow",
     "automation"
   ],
@@ -18,6 +18,14 @@
   "author": {
     "name": "Evans",
     "email": "snaveqiptoo@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sudoevans/n8n-nodes-mpesa-daraja.git"
+  },
+  "homepage": "https://github.com/sudoevans/n8n-nodes-mpesa-daraja#readme",
+  "bugs": {
+    "url": "https://github.com/sudoevans/n8n-nodes-mpesa-daraja/issues"
   },
   "main": "index.js",
   "scripts": {
