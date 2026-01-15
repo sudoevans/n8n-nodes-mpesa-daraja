@@ -10,7 +10,7 @@ export class Mpesa implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'M-Pesa',
         name: 'mpesa',
-        icon: 'file:../../icons/mpesa.svg',
+        icon: 'file:mpesa.svg',
         group: ['transform'],
         version: 1,
         subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -801,14 +801,146 @@ export class Mpesa implements INodeType {
                         name: 'Shortcode',
                         value: 4,
                     },
+                    {
+                        name: 'MSISDN',
+                        value: 1,
+                    },
+                    {
+                        name: 'Till Number',
+                        value: 2,
+                    },
                 ],
                 default: 4,
                 displayOptions: {
                     show: {
                         resource: ['account'],
-                        operation: ['balance'],
+                        operation: ['balance', 'transactionStatus'],
                     },
                 },
+            },
+            // Transaction Status Fields
+            {
+                displayName: 'Transaction ID',
+                name: 'transactionId',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['transactionStatus'],
+                    },
+                },
+                description: 'The M-Pesa transaction ID to query',
+            },
+            {
+                displayName: 'Occasion',
+                name: 'occasion',
+                type: 'string',
+                default: '',
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['transactionStatus'],
+                    },
+                },
+                description: 'Optional additional information',
+            },
+            // Reversal Fields
+            {
+                displayName: 'Transaction ID',
+                name: 'transactionId',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['reversal'],
+                    },
+                },
+                description: 'The M-Pesa transaction ID to reverse',
+            },
+            {
+                displayName: 'Amount',
+                name: 'amount',
+                type: 'number',
+                default: 0,
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['reversal'],
+                    },
+                },
+                description: 'The amount to reverse',
+            },
+            {
+                displayName: 'Receiver Party',
+                name: 'receiverParty',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['reversal'],
+                    },
+                },
+                description: 'The shortcode receiving the reversed amount',
+            },
+            {
+                displayName: 'Receiver Identifier Type',
+                name: 'receiverIdentifierType',
+                type: 'options',
+                options: [
+                    {
+                        name: 'Shortcode',
+                        value: 4,
+                    },
+                    {
+                        name: 'MSISDN',
+                        value: 1,
+                    },
+                    {
+                        name: 'Till Number',
+                        value: 2,
+                    },
+                ],
+                default: 4,
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['reversal'],
+                    },
+                },
+            },
+            {
+                displayName: 'Occasion',
+                name: 'occasion',
+                type: 'string',
+                default: '',
+                displayOptions: {
+                    show: {
+                        resource: ['account'],
+                        operation: ['reversal'],
+                    },
+                },
+                description: 'Optional additional information',
+            },
+            // B2C Occasion Field
+            {
+                displayName: 'Occasion',
+                name: 'occasion',
+                type: 'string',
+                default: '',
+                displayOptions: {
+                    show: {
+                        resource: ['b2c'],
+                        operation: ['paymentRequest'],
+                    },
+                },
+                description: 'Optional additional information',
             },
         ],
     };
@@ -914,6 +1046,7 @@ export class Mpesa implements INodeType {
                         const remarks = this.getNodeParameter('remarks', i) as string;
                         const queueTimeOutUrl = this.getNodeParameter('queueTimeOutUrl', i) as string;
                         const resultUrl = this.getNodeParameter('resultUrl', i) as string;
+                        const occasion = this.getNodeParameter('occasion', i, '') as string;
 
                         const body = {
                             InitiatorName: initiatorName,
@@ -925,6 +1058,7 @@ export class Mpesa implements INodeType {
                             Remarks: remarks,
                             QueueTimeOutURL: queueTimeOutUrl,
                             ResultURL: resultUrl,
+                            Occasion: occasion,
                         };
 
                         responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/b2c/v1/paymentrequest', body);
@@ -1028,6 +1162,58 @@ export class Mpesa implements INodeType {
                         };
 
                         responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/accountbalance/v1/query', body);
+                    } else if (operation === 'transactionStatus') {
+                        const initiatorName = this.getNodeParameter('initiatorName', i) as string;
+                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const transactionId = this.getNodeParameter('transactionId', i) as string;
+                        const partyA = this.getNodeParameter('partyA', i) as string;
+                        const identifierType = this.getNodeParameter('identifierType', i) as number;
+                        const remarks = this.getNodeParameter('remarks', i) as string;
+                        const queueTimeOutUrl = this.getNodeParameter('queueTimeOutUrl', i) as string;
+                        const resultUrl = this.getNodeParameter('resultUrl', i) as string;
+                        const occasion = this.getNodeParameter('occasion', i, '') as string;
+
+                        const body = {
+                            Initiator: initiatorName,
+                            SecurityCredential: securityCredential,
+                            CommandID: 'TransactionStatusQuery',
+                            TransactionID: transactionId,
+                            PartyA: partyA,
+                            IdentifierType: identifierType,
+                            ResultURL: resultUrl,
+                            QueueTimeOutURL: queueTimeOutUrl,
+                            Remarks: remarks,
+                            Occasion: occasion,
+                        };
+
+                        responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/transactionstatus/v1/query', body);
+                    } else if (operation === 'reversal') {
+                        const initiatorName = this.getNodeParameter('initiatorName', i) as string;
+                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const transactionId = this.getNodeParameter('transactionId', i) as string;
+                        const amount = this.getNodeParameter('amount', i) as number;
+                        const receiverParty = this.getNodeParameter('receiverParty', i) as string;
+                        const receiverIdentifierType = this.getNodeParameter('receiverIdentifierType', i) as number;
+                        const remarks = this.getNodeParameter('remarks', i) as string;
+                        const queueTimeOutUrl = this.getNodeParameter('queueTimeOutUrl', i) as string;
+                        const resultUrl = this.getNodeParameter('resultUrl', i) as string;
+                        const occasion = this.getNodeParameter('occasion', i, '') as string;
+
+                        const body = {
+                            Initiator: initiatorName,
+                            SecurityCredential: securityCredential,
+                            CommandID: 'TransactionReversal',
+                            TransactionID: transactionId,
+                            Amount: amount.toString(),
+                            ReceiverParty: receiverParty,
+                            RecieverIdentifierType: receiverIdentifierType,  // Note: API has typo "Reciever"
+                            ResultURL: resultUrl,
+                            QueueTimeOutURL: queueTimeOutUrl,
+                            Remarks: remarks,
+                            Occasion: occasion,
+                        };
+
+                        responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/reversal/v1/request', body);
                     }
                 }
 
