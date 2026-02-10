@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mpesa-daraja",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "n8n community node for Safaricom M-Pesa Daraja 3.0 API - Mobile payments, STK Push, C2B, B2C, B2B transactions",
   "keywords": [
     "n8n-community-node-package",
