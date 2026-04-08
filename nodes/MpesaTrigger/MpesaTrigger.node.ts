@@ -1,9 +1,11 @@
 import {
+    IHookFunctions,
     INodeType,
     INodeTypeDescription,
     IWebhookFunctions,
     IWebhookResponseData,
     IDataObject,
+    NodeConnectionTypes,
 } from 'n8n-workflow';
 
 /**
@@ -35,10 +37,8 @@ export class MpesaTrigger implements INodeType {
         defaults: {
             name: 'M-Pesa Trigger',
         },
-        // eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-trigger-node
         inputs: [],
-        // eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
-        outputs: ['main'],
+        outputs: [NodeConnectionTypes.Main],
         webhooks: [
             {
                 name: 'default',
@@ -48,6 +48,13 @@ export class MpesaTrigger implements INodeType {
             },
         ],
         properties: [
+            {
+                displayName: 'Manual Setup Required',
+                name: 'manualSetupNotice',
+                type: 'notice',
+                default: '',
+                description: 'Activate the node, then copy the webhook URL from n8n and register it for the matching callback in the Safaricom Daraja portal',
+            },
             {
                 displayName: 'Event',
                 name: 'event',
@@ -108,6 +115,23 @@ export class MpesaTrigger implements INodeType {
                 description: 'Whether to normalize the callback payload to a consistent format',
             },
         ],
+    };
+
+    webhookMethods = {
+        default: {
+            async checkExists(this: IHookFunctions): Promise<boolean> {
+                return false;
+            },
+            async create(this: IHookFunctions): Promise<boolean> {
+                const staticData = this.getWorkflowStaticData('node');
+                staticData.lastWebhookUrl = this.getNodeWebhookUrl('default');
+
+                return true;
+            },
+            async delete(this: IHookFunctions): Promise<boolean> {
+                return true;
+            },
+        },
     };
 
     async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {

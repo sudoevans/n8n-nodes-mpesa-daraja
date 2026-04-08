@@ -41,7 +41,7 @@
     "lint": "eslint nodes credentials --ext .ts --fix",
     "lintcheck": "eslint nodes credentials --ext .ts",
     "prepublishOnly": "npm run build",
-    "test": "jest"
+    "test": "node scripts/smoke.js"
   },
   "files": [
     "dist"
