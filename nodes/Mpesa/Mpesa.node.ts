@@ -1,10 +1,47 @@
 import {
+    ICredentialDataDecryptedObject,
     IExecuteFunctions,
     INodeExecutionData,
     INodeType,
     INodeTypeDescription,
+    NodeConnectionTypes,
+    NodeOperationError,
 } from 'n8n-workflow';
 import { mpesaApiRequest } from './GenericFunctions';
+
+function getRequiredCredentialValue(
+    credentials: ICredentialDataDecryptedObject,
+    key: 'passkey' | 'securityCredential',
+    label: string,
+): string {
+    const value = credentials[key];
+
+    if (typeof value !== 'string' || value.trim() === '') {
+        throw new Error(`${label} is missing from the M-Pesa API credentials.`);
+    }
+
+    return value.trim();
+}
+
+function getEastAfricaTimestamp(): string {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const eat = new Date(utc + (3 * 60 * 60 * 1000));
+
+    return eat.toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+}
+
+function getStkPartyB(
+    transactionType: string,
+    businessShortCode: string,
+    buyGoodsTillNumber?: string,
+): string {
+    if (transactionType === 'CustomerBuyGoodsOnline') {
+        return (buyGoodsTillNumber ?? '').trim();
+    }
+
+    return businessShortCode.trim();
+}
 
 export class Mpesa implements INodeType {
     description: INodeTypeDescription = {
@@ -13,16 +50,14 @@ export class Mpesa implements INodeType {
         icon: 'file:mpesa.svg',
         group: ['transform'],
         version: 1,
-        subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+        subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
         description: 'Consume M-Pesa Daraja 3.0 APIs',
         documentationUrl: 'https://developer.safaricom.co.ke/apis',
         defaults: {
             name: 'M-Pesa',
         },
-        // eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
-        inputs: ['main'],
-        // eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
-        outputs: ['main'],
+        inputs: [NodeConnectionTypes.Main],
+        outputs: [NodeConnectionTypes.Main],
         credentials: [
             {
                 name: 'mpesaApi',
@@ -37,19 +72,9 @@ export class Mpesa implements INodeType {
                 noDataExpression: true,
                 options: [
                     {
-                        name: 'STK Push',
-                        value: 'stkPush',
-                        description: 'Lipa na M-Pesa Online payment',
-                    },
-                    {
-                        name: 'C2B',
-                        value: 'c2b',
-                        description: 'Customer to Business payments',
-                    },
-                    {
-                        name: 'B2C',
-                        value: 'b2c',
-                        description: 'Business to Customer disbursements',
+                        name: 'Account',
+                        value: 'account',
+                        description: 'Account operations like balance and status',
                     },
                     {
                         name: 'B2B',
@@ -57,9 +82,14 @@ export class Mpesa implements INodeType {
                         description: 'Business to Business payments',
                     },
                     {
-                        name: 'Account',
-                        value: 'account',
-                        description: 'Account operations like balance and status',
+                        name: 'B2C',
+                        value: 'b2c',
+                        description: 'Business to Customer disbursements',
+                    },
+                    {
+                        name: 'C2B',
+                        value: 'c2b',
+                        description: 'Customer to Business payments',
                     },
                     {
                         name: 'Identity',
@@ -70,6 +100,11 @@ export class Mpesa implements INodeType {
                         name: 'Pull API',
                         value: 'pull',
                         description: 'Pull transaction history',
+                    },
+                    {
+                        name: 'STK Push',
+                        value: 'stkPush',
+                        description: 'Lipa na M-Pesa Online payment',
                     },
                 ],
                 default: 'stkPush',
@@ -265,24 +300,8 @@ export class Mpesa implements INodeType {
                         operation: ['initiate', 'queryStatus'],
                     },
                 },
-                description: 'The organization shortcode used to receive the transaction',
-            },
-            {
-                displayName: 'Passkey',
-                name: 'passkey',
-                type: 'string',
-                typeOptions: {
-                    password: true,
-                },
-                default: '',
-                required: true,
-                displayOptions: {
-                    show: {
-                        resource: ['stkPush'],
-                        operation: ['initiate', 'queryStatus'],
-                    },
-                },
-                description: 'Used to generate the password',
+                description:
+                    'The organization shortcode. For Buy Goods, use the go-live organization shortcode and provide the till number separately as Party B.',
             },
             {
                 displayName: 'Amount',
@@ -337,6 +356,21 @@ export class Mpesa implements INodeType {
                     },
                 },
                 description: 'The type of transaction (PayBill or Till)',
+            },
+            {
+                displayName: 'Till Number (Party B)',
+                name: 'buyGoodsTillNumber',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['stkPush'],
+                        operation: ['initiate'],
+                        transactionType: ['CustomerBuyGoodsOnline'],
+                    },
+                },
+                description: 'The till number to send as Party B for Buy Goods transactions',
             },
             {
                 displayName: 'Callback URL',
@@ -542,22 +576,6 @@ export class Mpesa implements INodeType {
                     },
                 },
                 description: 'The username of the API operator as set on the M-Pesa portal',
-            },
-            {
-                displayName: 'Security Credential',
-                name: 'securityCredential',
-                type: 'string',
-                typeOptions: {
-                    password: true,
-                },
-                default: '',
-                required: true,
-                displayOptions: {
-                    show: {
-                        resource: ['b2c', 'account', 'b2b'],
-                    },
-                },
-                description: 'Encrypted security credential',
             },
             {
                 displayName: 'Payment Type',
@@ -1035,6 +1053,7 @@ export class Mpesa implements INodeType {
         const returnData: INodeExecutionData[] = [];
         const resource = this.getNodeParameter('resource', 0) as string;
         const operation = this.getNodeParameter('operation', 0) as string;
+        const credentials = await this.getCredentials('mpesaApi');
 
         for (let i = 0; i < items.length; i++) {
             try {
@@ -1042,21 +1061,22 @@ export class Mpesa implements INodeType {
                 if (resource === 'stkPush') {
                     if (operation === 'initiate') {
                         const businessShortCode = (this.getNodeParameter('businessShortCode', i) as string).trim();
-                        const passkey = (this.getNodeParameter('passkey', i) as string).trim();
+                        const passkey = getRequiredCredentialValue(credentials, 'passkey', 'Passkey');
                         const amount = this.getNodeParameter('amount', i) as number;
                         const phoneNumber = (this.getNodeParameter('phoneNumber', i) as string).trim();
                         const callbackUrl = (this.getNodeParameter('callbackUrl', i) as string).trim();
                         const accountReference = this.getNodeParameter('accountReference', i) as string;
                         const transactionDesc = this.getNodeParameter('transactionDesc', i) as string;
                         const transactionType = this.getNodeParameter('transactionType', i) as string;
+                        const buyGoodsTillNumber =
+                            transactionType === 'CustomerBuyGoodsOnline'
+                                ? (this.getNodeParameter('buyGoodsTillNumber', i) as string)
+                                : undefined;
 
-                        // Calculate Timestamp in EAT (UTC+3)
-                        const now = new Date();
-                        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-                        const eat = new Date(utc + (3600000 * 3));
-                        const timestamp = eat.toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+                        const timestamp = getEastAfricaTimestamp();
 
                         const password = Buffer.from(`${businessShortCode}${passkey}${timestamp}`).toString('base64');
+                        const partyB = getStkPartyB(transactionType, businessShortCode, buyGoodsTillNumber);
 
                         const body = {
                             BusinessShortCode: businessShortCode,
@@ -1065,7 +1085,7 @@ export class Mpesa implements INodeType {
                             TransactionType: transactionType,
                             Amount: amount.toString(),
                             PartyA: phoneNumber,
-                            PartyB: businessShortCode,
+                            PartyB: partyB,
                             PhoneNumber: phoneNumber,
                             CallBackURL: callbackUrl,
                             AccountReference: accountReference,
@@ -1075,10 +1095,10 @@ export class Mpesa implements INodeType {
                         responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/stkpush/v1/processrequest', body);
                     } else if (operation === 'queryStatus') {
                         const businessShortCode = this.getNodeParameter('businessShortCode', i) as string;
-                        const passkey = this.getNodeParameter('passkey', i) as string;
+                        const passkey = getRequiredCredentialValue(credentials, 'passkey', 'Passkey');
                         const checkoutRequestId = this.getNodeParameter('checkoutRequestId', i) as string;
 
-                        const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+                        const timestamp = getEastAfricaTimestamp();
                         const password = Buffer.from(`${businessShortCode}${passkey}${timestamp}`).toString('base64');
 
                         const body = {
@@ -1125,7 +1145,7 @@ export class Mpesa implements INodeType {
                 } else if (resource === 'b2c') {
                     if (operation === 'paymentRequest') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const commandId = this.getNodeParameter('commandId', i) as string;
                         const amount = this.getNodeParameter('amount', i) as number;
                         const partyA = this.getNodeParameter('partyA', i) as string;
@@ -1153,7 +1173,7 @@ export class Mpesa implements INodeType {
                 } else if (resource === 'b2b') {
                     if (operation === 'paymentRequest') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const commandId = this.getNodeParameter('commandId', i) as string;
                         const amount = this.getNodeParameter('amount', i) as number;
                         const partyA = this.getNodeParameter('partyA', i) as string;
@@ -1185,7 +1205,7 @@ export class Mpesa implements INodeType {
                 } else if (resource === 'identity') {
                     if (operation === 'checkAti') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const customerNumber = this.getNodeParameter('customerNumber', i) as string;
 
                         const body = {
@@ -1230,7 +1250,7 @@ export class Mpesa implements INodeType {
                 } else if (resource === 'account') {
                     if (operation === 'balance') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const partyA = this.getNodeParameter('partyA', i) as string;
                         const identifierType = this.getNodeParameter('identifierType', i) as number;
                         const remarks = this.getNodeParameter('remarks', i) as string;
@@ -1251,7 +1271,7 @@ export class Mpesa implements INodeType {
                         responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/accountbalance/v1/query', body);
                     } else if (operation === 'transactionStatus') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const transactionId = this.getNodeParameter('transactionId', i) as string;
                         const partyA = this.getNodeParameter('partyA', i) as string;
                         const identifierType = this.getNodeParameter('identifierType', i) as number;
@@ -1276,7 +1296,7 @@ export class Mpesa implements INodeType {
                         responseData = await mpesaApiRequest.call(this, 'POST', '/mpesa/transactionstatus/v1/query', body);
                     } else if (operation === 'reversal') {
                         const initiatorName = this.getNodeParameter('initiatorName', i) as string;
-                        const securityCredential = this.getNodeParameter('securityCredential', i) as string;
+                        const securityCredential = getRequiredCredentialValue(credentials, 'securityCredential', 'Security Credential');
                         const transactionId = this.getNodeParameter('transactionId', i) as string;
                         const amount = this.getNodeParameter('amount', i) as number;
                         const receiverParty = this.getNodeParameter('receiverParty', i) as string;
@@ -1306,6 +1326,12 @@ export class Mpesa implements INodeType {
 
                 returnData.push({ json: responseData, pairedItem: { item: i } });
             } catch (error) {
+                if (error instanceof Error && error.message.includes('is missing from the M-Pesa API credentials')) {
+                    throw new NodeOperationError(this.getNode(), error.message, {
+                        itemIndex: i,
+                    });
+                }
+
                 if (this.continueOnFail()) {
                     returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
                     continue;
