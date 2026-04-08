@@ -1,4 +1,6 @@
 import {
+    IAdditionalCredentialOptions,
+    ICredentialDataDecryptedObject,
     IExecuteFunctions,
     IHookFunctions,
     ILoadOptionsFunctions,
@@ -25,6 +27,18 @@ export async function mpesaApiRequest(
     const credentials = await this.getCredentials('mpesaApi');
     const environment = credentials.environment as string;
     const baseUrl = getBaseUrl(environment);
+    const credentialsWithFreshToken: ICredentialDataDecryptedObject = {
+        ...credentials,
+        accessToken: '',
+    };
+    const credentialOptions: IAdditionalCredentialOptions = {
+        credentialsDecrypted: {
+            id: 'mpesaApi',
+            name: 'mpesaApi',
+            type: 'mpesaApi',
+            data: credentialsWithFreshToken,
+        },
+    };
     const options: IHttpRequestOptions = {
         method,
         url: `${baseUrl}${endpoint}`,
@@ -40,7 +54,12 @@ export async function mpesaApiRequest(
     }
 
     try {
-        return await this.helpers.httpRequestWithAuthentication.call(this, 'mpesaApi', options);
+        return await this.helpers.httpRequestWithAuthentication.call(
+            this,
+            'mpesaApi',
+            options,
+            credentialOptions,
+        );
     } catch (error) {
         throw new NodeApiError(this.getNode(), error as JsonObject);
     }

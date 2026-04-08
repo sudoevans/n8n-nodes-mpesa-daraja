@@ -31,6 +31,18 @@ function getEastAfricaTimestamp(): string {
     return eat.toISOString().replace(/[^0-9]/g, '').slice(0, 14);
 }
 
+function getStkPartyB(
+    transactionType: string,
+    businessShortCode: string,
+    buyGoodsTillNumber?: string,
+): string {
+    if (transactionType === 'CustomerBuyGoodsOnline') {
+        return (buyGoodsTillNumber ?? '').trim();
+    }
+
+    return businessShortCode.trim();
+}
+
 export class Mpesa implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'M-Pesa',
@@ -288,7 +300,8 @@ export class Mpesa implements INodeType {
                         operation: ['initiate', 'queryStatus'],
                     },
                 },
-                description: 'The organization shortcode used to receive the transaction',
+                description:
+                    'The organization shortcode. For Buy Goods, use the go-live organization shortcode and provide the till number separately as Party B.',
             },
             {
                 displayName: 'Amount',
@@ -343,6 +356,21 @@ export class Mpesa implements INodeType {
                     },
                 },
                 description: 'The type of transaction (PayBill or Till)',
+            },
+            {
+                displayName: 'Till Number (Party B)',
+                name: 'buyGoodsTillNumber',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        resource: ['stkPush'],
+                        operation: ['initiate'],
+                        transactionType: ['CustomerBuyGoodsOnline'],
+                    },
+                },
+                description: 'The till number to send as Party B for Buy Goods transactions',
             },
             {
                 displayName: 'Callback URL',
@@ -1040,10 +1068,15 @@ export class Mpesa implements INodeType {
                         const accountReference = this.getNodeParameter('accountReference', i) as string;
                         const transactionDesc = this.getNodeParameter('transactionDesc', i) as string;
                         const transactionType = this.getNodeParameter('transactionType', i) as string;
+                        const buyGoodsTillNumber =
+                            transactionType === 'CustomerBuyGoodsOnline'
+                                ? (this.getNodeParameter('buyGoodsTillNumber', i) as string)
+                                : undefined;
 
                         const timestamp = getEastAfricaTimestamp();
 
                         const password = Buffer.from(`${businessShortCode}${passkey}${timestamp}`).toString('base64');
+                        const partyB = getStkPartyB(transactionType, businessShortCode, buyGoodsTillNumber);
 
                         const body = {
                             BusinessShortCode: businessShortCode,
@@ -1052,7 +1085,7 @@ export class Mpesa implements INodeType {
                             TransactionType: transactionType,
                             Amount: amount.toString(),
                             PartyA: phoneNumber,
-                            PartyB: businessShortCode,
+                            PartyB: partyB,
                             PhoneNumber: phoneNumber,
                             CallBackURL: callbackUrl,
                             AccountReference: accountReference,
