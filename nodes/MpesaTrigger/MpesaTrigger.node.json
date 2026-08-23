@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-mpesa-daraja",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Finance & Accounting", "Sales"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/sudoevans/n8n-nodes-mpesa-daraja#credentials-setup"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/sudoevans/n8n-nodes-mpesa-daraja#mpesa-trigger-node"
+			}
+		]
+	}
+}

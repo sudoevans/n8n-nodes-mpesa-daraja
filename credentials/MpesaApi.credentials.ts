@@ -8,6 +8,8 @@ import {
     ICredentialTestRequest,
 } from 'n8n-workflow';
 
+/* eslint-disable @n8n/community-nodes/credential-unnecessary-password -- Daraja credential values must remain masked in the n8n UI. */
+
 export class MpesaApi implements ICredentialType {
     name = 'mpesaApi';
     displayName = 'M-Pesa API';

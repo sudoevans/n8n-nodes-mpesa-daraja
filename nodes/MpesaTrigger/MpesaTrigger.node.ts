@@ -28,7 +28,7 @@ export class MpesaTrigger implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'M-Pesa Trigger',
         name: 'mpesaTrigger',
-        icon: 'file:mpesa.svg',
+        icon: { light: 'file:mpesa.svg', dark: 'file:mpesa.dark.svg' },
         group: ['trigger'],
         version: 1,
         subtitle: '={{$parameter["event"]}}',
@@ -62,19 +62,9 @@ export class MpesaTrigger implements INodeType {
                 noDataExpression: true,
                 options: [
                     {
-                        name: 'Payment Received',
-                        value: 'payment.received',
-                        description: 'Triggered when a customer pays to your Till or Paybill (C2B confirmation)',
-                    },
-                    {
-                        name: 'STK Push Completed',
-                        value: 'stkpush.completed',
-                        description: 'Triggered when a Lipa na M-Pesa (STK Push) transaction completes',
-                    },
-                    {
-                        name: 'B2C Completed',
-                        value: 'b2c.completed',
-                        description: 'Triggered when a Business-to-Customer disbursement completes',
+                        name: 'Account Balance Completed',
+                        value: 'balance.completed',
+                        description: 'Triggered when an Account Balance query completes',
                     },
                     {
                         name: 'B2B Completed',
@@ -82,14 +72,24 @@ export class MpesaTrigger implements INodeType {
                         description: 'Triggered when a Business-to-Business payment completes',
                     },
                     {
+                        name: 'B2C Completed',
+                        value: 'b2c.completed',
+                        description: 'Triggered when a Business-to-Customer disbursement completes',
+                    },
+                    {
+                        name: 'Payment Received',
+                        value: 'payment.received',
+                        description: 'Triggered when a customer pays to your Till or Paybill (C2B confirmation)',
+                    },
+                    {
                         name: 'Reversal Completed',
                         value: 'reversal.completed',
                         description: 'Triggered when a transaction reversal completes',
                     },
                     {
-                        name: 'Account Balance Completed',
-                        value: 'balance.completed',
-                        description: 'Triggered when an Account Balance query completes',
+                        name: 'STK Push Completed',
+                        value: 'stkpush.completed',
+                        description: 'Triggered when a Lipa na M-Pesa (STK Push) transaction completes',
                     },
                     {
                         name: 'Transaction Status Completed',

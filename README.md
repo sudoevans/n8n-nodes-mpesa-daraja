@@ -232,6 +232,24 @@ The trigger node supports the following webhook events:
 - [n8n Documentation](https://docs.n8n.io)
 - [n8n Community Forum](https://community.n8n.io)
 
+## Development
+
+This project uses the official [`@n8n/node-cli`](https://docs.n8n.io/integrations/creating-nodes/build/n8n-node/) toolchain and requires Node.js 22.22.0 or newer.
+
+```bash
+npm ci
+npm run dev
+```
+
+The development command builds the package, starts a local n8n instance at `http://localhost:5678`, and reloads the nodes when source files change.
+
+Before opening a pull request, run:
+
+```bash
+npm run lint
+npm test
+```
+
 ## License
 
 [MIT](LICENSE)

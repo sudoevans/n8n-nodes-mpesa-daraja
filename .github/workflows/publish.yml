@@ -1,34 +1,33 @@
-name: Publish package to npmjs
+name: Publish
 
 on:
-    release:
-        types: [published]
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            id-token: write
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Use Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '22'
-                  registry-url: 'https://registry.npmjs.org'
-                  cache: 'npm'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Build package
-              run: npm run build
-
-            - name: Publish package
-              run: npm publish --provenance --access public
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Release
+        run: |
+          [ -n "$NPM_TOKEN" ] && npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          npm run release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

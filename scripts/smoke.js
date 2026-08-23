@@ -28,6 +28,12 @@ function main() {
 	}
 
 	const mpesa = new Mpesa();
+	assert.strictEqual(mpesa.description.usableAsTool, true, 'M-Pesa node must be usable as an AI tool');
+	assert.deepStrictEqual(
+		mpesa.description.icon,
+		{ light: 'file:mpesa.svg', dark: 'file:mpesa.dark.svg' },
+		'Unexpected M-Pesa themed icons',
+	);
 	assert.strictEqual(
 		mpesa.description.subtitle,
 		'={{$parameter["resource"] + ": " + $parameter["operation"]}}',
@@ -43,6 +49,11 @@ function main() {
 	);
 
 	const trigger = new MpesaTrigger();
+	assert.deepStrictEqual(
+		trigger.description.icon,
+		{ light: 'file:mpesa.svg', dark: 'file:mpesa.dark.svg' },
+		'Unexpected M-Pesa Trigger themed icons',
+	);
 	assert.ok(trigger.webhookMethods?.default?.checkExists, 'Missing trigger checkExists stub');
 	assert.ok(trigger.webhookMethods?.default?.create, 'Missing trigger create stub');
 	assert.ok(trigger.webhookMethods?.default?.delete, 'Missing trigger delete stub');

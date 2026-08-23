@@ -21,9 +21,9 @@ export async function mpesaApiRequest(
     this: IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions,
     method: IHttpRequestMethods,
     endpoint: string,
-    body: any = {},
+    body: IDataObject = {},
     qs: IDataObject = {},
-): Promise<any> {
+): Promise<IDataObject> {
     const credentials = await this.getCredentials('mpesaApi');
     const environment = credentials.environment as string;
     const baseUrl = getBaseUrl(environment);
@@ -59,7 +59,7 @@ export async function mpesaApiRequest(
             'mpesaApi',
             options,
             credentialOptions,
-        );
+        ) as IDataObject;
     } catch (error) {
         throw new NodeApiError(this.getNode(), error as JsonObject);
     }
